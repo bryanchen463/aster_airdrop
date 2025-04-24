@@ -9,7 +9,8 @@ import yaml
 import threading
 config_logging(logging, logging.INFO, "aster.log")
 
-symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "DOTUSDT", "LINKUSDT", "BCHUSDT", "LTCUSDT", "XLMUSDT", "XMRUSDT", "XRPUSDT", "XLMUSDT", "XMRUSDT", "XRPUSDT", "XLMUSDT", "XMRUSDT", "XRPUSDT", "XLMUSDT", "XMRUSDT"]
+symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT","XRPUSDT", "DOGEUSDT"]
+random.seed(time.time())
 
 def run(key, secret):
     client = Client(key, secret,base_url="https://fapi.asterdex.com")
@@ -19,9 +20,26 @@ def run(key, secret):
     for symbol in symbols:
         for symbol_info in market_info["symbols"]:
             if symbol_info["symbol"] == symbol:
+                qty_precision = symbol_info["quantityPrecision"]
+                price_precision = symbol_info["pricePrecision"]
+                tick_size = 0
+                min_qty = 0
+                max_qty = 0
+                step_size = 0
+                for filter in symbol_info["filters"]:
+                    if filter["filterType"] == "LOT_SIZE":
+                        min_qty = filter["minQty"]
+                        max_qty = filter["maxQty"]
+                        step_size = filter["stepSize"]
+                    elif filter["filterType"] == "PRICE_FILTER":
+                        tick_size = filter["tickSize"]
                 symbol_limits[symbol] = {
-                    "qty_precision": symbol_info["quantityPrecision"],
-                    "price_precision": symbol_info["pricePrecision"],
+                    "qty_precision": int(qty_precision),
+                    "price_precision": int(price_precision),
+                    "min_qty": float(min_qty),
+                    "max_qty": float(max_qty),
+                    "tick_size": float(tick_size),
+                    "step_size": float(step_size),
                 }
     logging.info(f"symbol_limits: {symbol_limits}")
     def message_handler(message):
@@ -72,7 +90,6 @@ def run(key, secret):
             for balance in balances:
                 if balance["asset"] == "USDT":
                     net_balance = balance["availableBalance"]
-            logging.info(net_balance)
             if float(net_balance) < 0.001:
                 logging.info("net_balance is less than 0.001, not trading")
                 continue
@@ -80,31 +97,42 @@ def run(key, secret):
             bid_price = book_ticker["bidPrice"]
             ask_price = book_ticker["askPrice"]
             mid_price = (float(bid_price) + float(ask_price)) / 2
+            mid_price = (mid_price / float(symbol_limit["tick_size"])) * float(symbol_limit["tick_size"])
             mid_price = round(mid_price, symbol_limit["price_precision"])
-            if mid_price - float(bid_price) <= 0.0000000000001 and float(ask_price) - mid_price <= 0.0000000000001:
+            if abs(mid_price - float(bid_price)) <= 0.0000000000001 and abs(float(ask_price) - mid_price) <= 0.0000000000001:
                 # 价格波动太小，不交易
                 continue
-            quantity = random.uniform(0.001, 0.005)
-            quantity = round(quantity, 3)
-            symbol = random.choice(symbols)
+            times = random.randint(1, 5)
+            min_qty = symbol_limit["min_qty"]
+            max_qty = symbol_limit["max_qty"]
+            quantity = 5/mid_price
+            quantity = quantity + times * min_qty
+            quantity = quantity / float(symbol_limit["step_size"]) * float(symbol_limit["step_size"])
+            quantity = round(quantity, int(symbol_limit["qty_precision"]))
+            if quantity > float(max_qty):
+                quantity = float(max_qty)
+            if quantity * mid_price < 5:
+                logging.info(f"quantity * mid_price < 5, not trading")
+                continue
             logging.info(f"symbol: {symbol} quantity: {quantity} price: {mid_price}")
-            response = client.new_order(
-                symbol=symbol,
-                side="BUY",
-                quantity=quantity,
-                price=mid_price,
-                timeInForce="GTC",
-                type="LIMIT",
-            )
-            logging.info(f"new order response: {response}")
-            response = client.new_order(
-                symbol=symbol,
-                side="SELL",
-                quantity=quantity,
-                price=mid_price,
-                timeInForce="GTC",
-                type="LIMIT",
-            )
+            batch_orders = []
+            batch_orders.append({
+                "symbol":symbol,
+                "side":"BUY",
+                "quantity":quantity,
+                "price":mid_price,
+                "timeInForce":"GTC",
+                "type":"LIMIT"
+            })
+            batch_orders.append({
+                "symbol":symbol,
+                "side":"SELL",
+                "quantity":quantity,
+                "price":mid_price,
+                "timeInForce":"GTC",
+                "type":"LIMIT"
+            })
+            response = client.new_batch_order(batch_orders)
             logging.info(f"new order response: {response}")
         except ClientError as error:
             logging.error(
