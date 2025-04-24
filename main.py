@@ -9,7 +9,7 @@ import yaml
 import threading
 config_logging(logging, logging.INFO, "aster.log")
 
-symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT","XRPUSDT", "DOGEUSDT"]
+symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT","XRPUSDT", "DOGEUSDT", "AAVEUSDT", "LTCUSDT", "AVAXUSDT"]
 random.seed(time.time())
 
 def run(key, secret):
@@ -59,7 +59,7 @@ def run(key, secret):
 
     while True:
         try:
-            sleep_time = random.randint(10, 30)
+            sleep_time = random.randint(1, 60)
             logging.info(f"sleep_time: {sleep_time}")
             order_timeout = 300000
             orders = client.get_orders()
@@ -97,17 +97,18 @@ def run(key, secret):
             bid_price = book_ticker["bidPrice"]
             ask_price = book_ticker["askPrice"]
             mid_price = (float(bid_price) + float(ask_price)) / 2
-            mid_price = (mid_price / float(symbol_limit["tick_size"])) * float(symbol_limit["tick_size"])
+            mid_price = int(mid_price / float(symbol_limit["tick_size"])) * float(symbol_limit["tick_size"])
             mid_price = round(mid_price, symbol_limit["price_precision"])
-            if abs(mid_price - float(bid_price)) <= 0.0000000000001 and abs(float(ask_price) - mid_price) <= 0.0000000000001:
+            if abs(mid_price - float(bid_price)) <= 0.0000000000001 or abs(float(ask_price) - mid_price) <= 0.0000000000001:
                 # 价格波动太小，不交易
                 continue
+            # 一笔价值50usdt
             times = random.randint(1, 5)
             min_qty = symbol_limit["min_qty"]
             max_qty = symbol_limit["max_qty"]
-            quantity = 5/mid_price
+            quantity = 50/mid_price
             quantity = quantity + times * min_qty
-            quantity = quantity / float(symbol_limit["step_size"]) * float(symbol_limit["step_size"])
+            quantity = int(quantity / float(symbol_limit["step_size"])) * float(symbol_limit["step_size"])
             quantity = round(quantity, int(symbol_limit["qty_precision"]))
             if quantity > float(max_qty):
                 quantity = float(max_qty)
@@ -132,8 +133,9 @@ def run(key, secret):
                 "timeInForce":"GTC",
                 "type":"LIMIT"
             })
-            response = client.new_batch_order(batch_orders)
-            logging.info(f"new order response: {response}")
+            for order in batch_orders:
+                response = client.new_order(symbol=order["symbol"], side=order["side"], type=order["type"], quantity=order["quantity"], price=order["price"], timeInForce=order["timeInForce"])
+                logging.info(f"new order response: {response}")
         except ClientError as error:
             logging.error(
                 "Found error. status: {}, error code: {}, error message: {}".format(
