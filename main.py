@@ -12,8 +12,9 @@ config_logging(logging, logging.INFO, "aster.log")
 symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT","XRPUSDT", "DOGEUSDT", "AAVEUSDT", "LTCUSDT", "AVAXUSDT"]
 random.seed(time.time())
 
-def run(key, secret):
-    client = Client(key, secret,base_url="https://fapi.asterdex.com")
+def run(key, secret, proxy):
+    proxies = { 'https': proxy }
+    client = Client(key, secret,base_url="https://fapi.asterdex.com", proxies=proxies)
     market_info = client.exchange_info()
     logging.info(f"market_info: {market_info}")
     symbol_limits = {}
@@ -162,7 +163,7 @@ if __name__ == "__main__":
     threads = []
     for account in accounts:
         # run in parallel
-        thread = threading.Thread(target=run, args=(account["key"], account["secret"]))
+        thread = threading.Thread(target=run, args=(account["key"], account["secret"], account["proxy"]))
         thread.start()
         threads.append(thread)
     # wait for all threads to finish

@@ -1,0 +1,5 @@
+accounts:
+  - name: "xxx"
+    key: "xxx"
+    secret: "xxx"
+    proxy: "xxx"
