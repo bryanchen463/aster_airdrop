@@ -22,7 +22,7 @@ def close_position(client: Client):
         if float(position["notional"]) < 5:
             continue
         if position["symbol"] in symbols:
-            side = "SELL" if position["positionSide"] == "LONG" else "BUY"
+            side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
             amount = abs(float(position["positionAmt"]))
             logging.info(f"close position {position['symbol']} {side} {amount}")
             response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount)
