@@ -35,7 +35,7 @@ def is_cost_enough(client: Client, cost_per_day: float):
     cost = 0
     for income in income_history:
         if income["symbol"] in symbols:
-            cost += float(income["income"])
+            cost -= float(income["income"])
     return cost >= cost_per_day
 
 def run(key, secret, proxy, cost_per_day):
