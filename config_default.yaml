@@ -3,3 +3,4 @@ accounts:
     key: "xxx"
     secret: "xxx"
     proxy: "xxx"
+    cost_per_day: 1

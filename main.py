@@ -7,14 +7,39 @@ import time
 import random
 import yaml
 import threading
+from datetime import datetime
 config_logging(logging, logging.INFO, "aster.log")
 
 symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT","XRPUSDT", "DOGEUSDT", "AAVEUSDT", "LTCUSDT", "AVAXUSDT"]
 random.seed(time.time())
 
-def run(key, secret, proxy):
+def close_position(client: Client):
+    positions = client.get_position_risk()
+    for position in positions:
+        if time.time() * 1000 - position["updateTime"] <= 1000 * 60:
+            continue
+        if position["symbol"] in symbols:
+            side = "SELL" if position["positionSide"] == "LONG" else "BUY"
+            amount = abs(float(position["positionAmt"]))
+            response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount)
+            logging.info(f"close position response: {response}")
+
+def is_cost_enough(client: Client, cost_per_day: float):
+    # 计算当天整点的时间戳
+    start_time = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000
+    income_history = client.get_income_history(startTime=start_time)
+    cost = 0
+    for income in income_history:
+        if income["symbol"] in symbols:
+            cost += float(income["income"])
+    return cost >= cost_per_day
+
+def run(key, secret, proxy, cost_per_day):
     proxies = { 'https': proxy }
     client = Client(key, secret,base_url="https://fapi.asterdex.com", proxies=proxies)
+    if is_cost_enough(client, cost_per_day):
+        logging.info("cost is enough, not trading")
+        return
     market_info = client.exchange_info()
     logging.info(f"market_info: {market_info}")
     symbol_limits = {}
@@ -60,9 +85,9 @@ def run(key, secret, proxy):
 
     while True:
         try:
-            sleep_time = random.randint(1, 60)
+            sleep_time = random.randint(60, 120)
             logging.info(f"sleep_time: {sleep_time}")
-            order_timeout = 300000
+            order_timeout = 1000
             orders = client.get_orders()
             logging.info(orders)
             if len(orders) > 0:
@@ -70,7 +95,7 @@ def run(key, secret, proxy):
                     # 30s还没有成交修改价格，里面成交
                     logging.info(f"order symbol {order['symbol']} updateTime: {order['updateTime']} time: {time.time()} diff: {time.time() * 1000 - order['updateTime']}")
                     if time.time() * 1000 - order['updateTime'] > order_timeout:
-                        response = client.cancel_order(symbol=order['symbol'], orderId=order['orderId'], origClientOrderId=order['clientOrderId'])
+                        response = client.cancel_open_orders(symbol=order['symbol'])
                         logging.info(f"cancel order response: {response}")
                         response = client.new_order(
                             symbol=order['symbol'],
@@ -81,6 +106,7 @@ def run(key, secret, proxy):
                         logging.info(f"new order response: {response}")
                 time.sleep(sleep_time)
                 continue
+            close_position(client)
             response = client.balance(recvWindow=6000)
             # logging.info(response)
             symbol = random.choice(symbols)
@@ -163,7 +189,7 @@ if __name__ == "__main__":
     threads = []
     for account in accounts:
         # run in parallel
-        thread = threading.Thread(target=run, args=(account["key"], account["secret"], account["proxy"]))
+        thread = threading.Thread(target=run, args=(account["key"], account["secret"], account["proxy"], account["cost_per_day"]))
         thread.start()
         threads.append(thread)
     # wait for all threads to finish
