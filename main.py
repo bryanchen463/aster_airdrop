@@ -109,11 +109,11 @@ def run(key, secret, proxy, cost_per_day):
     while True:
         try:
             sleep_time = random.randint(60, 120)
+            logging.info(f"sleep_time: {sleep_time}")
             if is_cost_enough(client, cost_per_day):
                 logging.info("cost is enough, not trading")
                 time.sleep(sleep_time)
                 continue
-            logging.info(f"sleep_time: {sleep_time}")
             order_timeout = 1000
             orders = client.get_orders()
             logging.info(orders)
