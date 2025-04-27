@@ -54,7 +54,8 @@ def is_cost_enough(client: Client, cost_per_day: float):
     cost = 0
     for income in income_history:
         if income["symbol"] in symbols:
-            cost -= float(income["income"])
+            item_cost = float(income.get("income", 0))
+            cost -= item_cost
     logging.info(f"cost: {cost}")
     return cost >= cost_per_day
 
