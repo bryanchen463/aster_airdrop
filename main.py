@@ -46,8 +46,8 @@ def get_income_history(client: Client, start_time: int, end_time: int):
 
 def is_cost_enough(client: Client, cost_per_day: float):
     # 计算当天整点的时间戳
-    start_time = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000
-    end_time = datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999).timestamp() * 1000
+    start_time = int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
+    end_time = int(datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999).timestamp() * 1000)
     logging.info(f"start_time: {start_time} end_time: {end_time}")
     income_history = get_income_history(client, start_time, end_time)
     logging.info(f"income_history: {income_history}")
