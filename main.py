@@ -15,9 +15,11 @@ random.seed(time.time())
 
 def close_position(client: Client):
     positions = client.get_position_risk()
-    print(f"positions: {positions}")
+    logging.info(f"positions: {positions}")
     for position in positions:
         if time.time() * 1000 - position["updateTime"] <= 1000 * 60:
+            continue
+        if float(position["notional"]) < 5:
             continue
         if position["symbol"] in symbols:
             side = "SELL" if position["positionSide"] == "LONG" else "BUY"
