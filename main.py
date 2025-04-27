@@ -24,6 +24,7 @@ def close_position(client: Client):
         if position["symbol"] in symbols:
             side = "SELL" if position["positionSide"] == "LONG" else "BUY"
             amount = abs(float(position["positionAmt"]))
+            logging.info(f"close position {position['symbol']} {side} {amount}")
             response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount)
             logging.info(f"close position response: {response}")
 
