@@ -31,16 +31,16 @@ def close_position(client: Client):
 def get_income_history(client: Client, start_time: int, end_time: int):
     income_history = []
     while True:
-        income_history = client.get_income_history(startTime=start_time, endTime=end_time)
-        logging.info(f"income_history: {income_history}")
-        for income in income_history:
-            if income["symbol"] in symbols:
-                if int(income["time"]) <= start_time:
+        items = client.get_income_history(startTime=start_time, endTime=end_time)
+        logging.info(f"income_history: {items}")
+        for item in items:
+            if item["symbol"] in symbols:
+                if int(item["time"]) < start_time:
                     continue
-                income_history.append(income)
-        if len(income_history) == 0:
+                income_history.append(item)
+        if len(items) == 0:
             break
-        start_time = income_history[-1]["time"]
+        start_time = int(items[-1]["time"]) + 1
         time.sleep(0.1)
     return income_history
 
