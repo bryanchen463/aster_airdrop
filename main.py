@@ -35,6 +35,8 @@ def get_income_history(client: Client, start_time: int):
         logging.info(f"income_history: {income_history}")
         for income in income_history:
             if income["symbol"] in symbols:
+                if int(income["time"]) <= start_time:
+                    continue
                 income_history.append(income)
         if len(income_history) == 0:
             break
@@ -58,9 +60,7 @@ def is_cost_enough(client: Client, cost_per_day: float):
 def run(key, secret, proxy, cost_per_day):
     proxies = { 'https': proxy }
     client = Client(key, secret,base_url="https://fapi.asterdex.com", proxies=proxies)
-    if is_cost_enough(client, cost_per_day):
-        logging.info("cost is enough, not trading")
-        return
+    
     market_info = client.exchange_info()
     logging.info(f"market_info: {market_info}")
     symbol_limits = {}
@@ -107,6 +107,10 @@ def run(key, secret, proxy, cost_per_day):
     while True:
         try:
             sleep_time = random.randint(60, 120)
+            if is_cost_enough(client, cost_per_day):
+                logging.info("cost is enough, not trading")
+                time.sleep(sleep_time)
+                continue
             logging.info(f"sleep_time: {sleep_time}")
             order_timeout = 1000
             orders = client.get_orders()
