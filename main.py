@@ -165,7 +165,7 @@ def run(key, secret, proxy, cost_per_day):
                 response = client.new_order(symbol=order["symbol"], side=order["side"], type=order["type"], quantity=order["quantity"], price=order["price"], timeInForce=order["timeInForce"])
                 logging.info(f"new order response: {response}")
         except ClientError as error:
-            logging.error(
+            logging.exception(
                 "Found error. status: {}, error code: {}, error message: {}".format(
                     error.status_code, error.error_code, error.error_message
             )
