@@ -10,7 +10,7 @@ import threading
 from datetime import datetime
 config_logging(logging, logging.INFO, "aster.log")
 
-symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT","XRPUSDT", "DOGEUSDT", "AAVEUSDT", "LTCUSDT", "AVAXUSDT"]
+symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT"]
 random.seed(time.time())
 
 def close_position(client: Client):
