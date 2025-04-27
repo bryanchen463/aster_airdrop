@@ -25,7 +25,7 @@ def close_position(client: Client):
             side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
             amount = abs(float(position["positionAmt"]))
             logging.info(f"close position {position['symbol']} {side} {amount}")
-            response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount)
+            response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
             logging.info(f"close position response: {response}")
 
 def is_cost_enough(client: Client, cost_per_day: float):
