@@ -32,10 +32,12 @@ def is_cost_enough(client: Client, cost_per_day: float):
     # 计算当天整点的时间戳
     start_time = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000
     income_history = client.get_income_history(startTime=start_time)
+    logging.info(f"income_history: {income_history}")
     cost = 0
     for income in income_history:
         if income["symbol"] in symbols:
             cost -= float(income["income"])
+    logging.info(f"cost: {cost}")
     return cost >= cost_per_day
 
 def run(key, secret, proxy, cost_per_day):
