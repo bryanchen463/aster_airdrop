@@ -17,7 +17,7 @@ def close_position(client: Client):
     positions = client.get_position_risk()
     logging.info(f"positions: {positions}")
     for position in positions:
-        if time.time() * 1000 - position["updateTime"] <= 1000 * 60:
+        if time.time() * 1000 - position["updateTime"] <= 100:
             continue
         if float(position["notional"]) < 5:
             continue
@@ -108,7 +108,7 @@ def run(key, secret, proxy, cost_per_day):
 
     while True:
         try:
-            sleep_time = random.randint(60, 120)
+            sleep_time = random.randint(60, 300)
             logging.info(f"sleep_time: {sleep_time}")
             if is_cost_enough(client, cost_per_day):
                 logging.info("cost is enough, not trading")
@@ -196,6 +196,7 @@ def run(key, secret, proxy, cost_per_day):
                     error.status_code, error.error_code, error.error_message
             )
         )
+        close_position(client)
         time.sleep(sleep_time)
 
 
@@ -204,6 +205,16 @@ def run(key, secret, proxy, cost_per_day):
 
     # logging.info("closing ws connection")
     # ws_client.stop()
+
+def thread_function(key, secret, proxy, cost_per_day):
+    while True:  # 循环确保线程持续运行
+        try:
+            run(key, secret, proxy, cost_per_day)
+        except Exception as e:
+            print(f"Caught exception: {e}")
+            # 此处可添加错误恢复逻辑（如重试、清理资源等）
+        # 异常处理后，循环继续，线程不会终止
+        time.sleep(1)  # 模拟后续操作
 
 def init_accounts():
     with open("config.yaml", "r") as f:
@@ -216,7 +227,7 @@ if __name__ == "__main__":
     threads = []
     for account in accounts:
         # run in parallel
-        thread = threading.Thread(target=run, args=(account["key"], account["secret"], account["proxy"], account["cost_per_day"]))
+        thread = threading.Thread(target=thread_function, args=(account["key"], account["secret"], account["proxy"], account["cost_per_day"]))
         thread.start()
         threads.append(thread)
     # wait for all threads to finish
