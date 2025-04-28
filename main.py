@@ -204,7 +204,6 @@ def init_accounts():
 
 if __name__ == "__main__":
     accounts = init_accounts()
-    logging.info(f"accounts: {accounts}")
     threads = []
     for account in accounts:
         # run in parallel
