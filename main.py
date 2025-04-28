@@ -15,7 +15,6 @@ random.seed(time.time())
 
 def close_position(client: Client):
     positions = client.get_position_risk()
-    logging.info(f"positions: {positions}")
     for position in positions:
         if time.time() * 1000 - position["updateTime"] <= 100:
             continue
