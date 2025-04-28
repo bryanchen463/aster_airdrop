@@ -104,13 +104,6 @@ def run(key, secret, proxy, cost_per_day):
                     if time.time() * 1000 - order['updateTime'] > order_timeout:
                         response = client.cancel_open_orders(symbol=order['symbol'])
                         logging.info(f"cancel order response: {response}")
-                        response = client.new_order(
-                            symbol=order['symbol'],
-                            side=order['side'],
-                            quantity=order['origQty'],
-                            type="MARKET",
-                        )
-                        logging.info(f"new order response: {response}")
                 time.sleep(sleep_time)
                 continue
             close_position(client)
