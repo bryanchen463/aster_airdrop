@@ -41,7 +41,7 @@ def get_income_history(client: Client, start_time: int, end_time: int):
         time.sleep(0.1)
     return income_history
 
-def is_cost_enough(client: Client, cost_per_day: float):
+def is_cost_enough(client: Client, api_key: str, cost_per_day: float):
     # 计算当天整点的时间戳
     start_time = int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
     end_time = int(datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999).timestamp() * 1000)
@@ -52,7 +52,7 @@ def is_cost_enough(client: Client, cost_per_day: float):
         if income["symbol"] in symbols:
             item_cost = float(income.get("income", 0))
             cost -= item_cost
-    logging.info(f"cost: {cost}")
+    logging.info(f"{api_key} cost: {cost}")
     return cost >= cost_per_day
 
 def run(key, secret, proxy, cost_per_day):
@@ -91,7 +91,7 @@ def run(key, secret, proxy, cost_per_day):
         try:
             sleep_time = random.randint(60, 300)
             logging.info(f"sleep_time: {sleep_time}")
-            if is_cost_enough(client, cost_per_day):
+            if is_cost_enough(client, key, cost_per_day):
                 logging.info("cost is enough, not trading")
                 time.sleep(sleep_time)
                 continue
