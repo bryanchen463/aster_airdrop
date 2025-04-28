@@ -46,6 +46,7 @@ def is_cost_enough(client: Client, cost_per_day: float):
     start_time = int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
     end_time = int(datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999).timestamp() * 1000)
     income_history = get_income_history(client, start_time, end_time)
+    logging.info(f"income_history: {income_history}")
     cost = 0
     for income in income_history:
         if income["symbol"] in symbols:
@@ -189,6 +190,7 @@ def run(key, secret, proxy, cost_per_day):
 def thread_function(key, secret, proxy, cost_per_day):
     while True:  # 循环确保线程持续运行
         try:
+            logging.info(f"start run {key} {proxy} {cost_per_day}")    
             run(key, secret, proxy, cost_per_day)
         except Exception as e:
             print(f"Caught exception: {e}")
