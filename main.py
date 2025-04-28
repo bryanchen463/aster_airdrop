@@ -24,15 +24,12 @@ def close_position(client: Client):
         if position["symbol"] in symbols:
             side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
             amount = abs(float(position["positionAmt"]))
-            logging.info(f"close position {position['symbol']} {side} {amount}")
             response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
-            logging.info(f"close position response: {response}")
 
 def get_income_history(client: Client, start_time: int, end_time: int):
     income_history = []
     while True:
         items = client.get_income_history(startTime=start_time, endTime=end_time)
-        logging.info(f"income_history: {items}")
         for item in items:
             if item["symbol"] in symbols:
                 if int(item["time"]) < start_time:
@@ -48,9 +45,7 @@ def is_cost_enough(client: Client, cost_per_day: float):
     # 计算当天整点的时间戳
     start_time = int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
     end_time = int(datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999).timestamp() * 1000)
-    logging.info(f"start_time: {start_time} end_time: {end_time}")
     income_history = get_income_history(client, start_time, end_time)
-    logging.info(f"income_history: {income_history}")
     cost = 0
     for income in income_history:
         if income["symbol"] in symbols:
@@ -90,21 +85,6 @@ def run(key, secret, proxy, cost_per_day):
                     "tick_size": float(tick_size),
                     "step_size": float(step_size),
                 }
-    logging.info(f"symbol_limits: {symbol_limits}")
-    def message_handler(message):
-        print(message)
-    # response = client.new_listen_key()
-
-    # logging.info("Receving listen key : {}".format(response["listenKey"]))
-
-    # ws_client = WebsocketClient()
-    # ws_client.start()
-
-    # ws_client.user_data(
-    #     listen_key=response["listenKey"],
-    #     id=1,
-    #     callback=message_handler,
-    # )
 
     while True:
         try:
