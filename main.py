@@ -18,12 +18,11 @@ def close_position(client: Client):
     for position in positions:
         if time.time() * 1000 - position["updateTime"] <= 100:
             continue
-        if float(position["notional"]) < 5:
-            continue
-        if position["symbol"] in symbols:
-            side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
-            amount = abs(float(position["positionAmt"]))
-            response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
+        if abs(float(position["notional"])) > 0:
+            if position["symbol"] in symbols:
+                side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
+                amount = abs(float(position["positionAmt"]))
+                response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
 
 def get_income_history(client: Client, start_time: int, end_time: int):
     income_history = []
