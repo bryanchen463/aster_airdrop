@@ -39,11 +39,11 @@ class CompressedRotatingFileHandler(logging.handlers.RotatingFileHandler):
 
 def get_logger(name) -> logging.Logger:
     logger = logging.getLogger(name)
-    logger.setLevel(logging.WARN)
+    logger.setLevel(logging.INFO)
     single_file_size = 1 * 1024 * 1024 * 1024 # 1GB
     monitorHandler = CompressedRotatingFileHandler(filename=os.path.join(log_dir, f"{name}.log"), maxBytes=single_file_size, backupCount=5)
 
-    monitorHandler.setLevel(logging.WARN)
+    monitorHandler.setLevel(logging.INFO)
     monitorFormatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     monitorHandler.setFormatter(monitorFormatter)
     logger.addHandler(monitorHandler)
