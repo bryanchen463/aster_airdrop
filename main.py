@@ -40,12 +40,27 @@ class CompressedRotatingFileHandler(logging.handlers.RotatingFileHandler):
 def get_logger(name) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
+    logger.propagate = False  # 禁止传播到根日志记录器
+    
+    # 如果已有处理器则先清除（避免重复添加）
+    if logger.handlers:
+        for handler in logger.handlers:
+            logger.removeHandler(handler)
+    
+    # 文件处理器配置保持不变
     single_file_size = 1 * 1024 * 1024 * 1024 # 1GB
     monitorHandler = CompressedRotatingFileHandler(filename=os.path.join(log_dir, f"{name}.log"), maxBytes=single_file_size, backupCount=5)
 
     monitorHandler.setLevel(logging.INFO)
     monitorFormatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     monitorHandler.setFormatter(monitorFormatter)
+    
+    # 移除所有控制台处理器（如果有）
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers[:]:
+        if isinstance(handler, logging.StreamHandler):
+            root_logger.removeHandler(handler)
+            
     logger.addHandler(monitorHandler)
     return logger
 
@@ -61,7 +76,9 @@ def close_position(client: Client):
                 side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
                 amount = abs(float(position["positionAmt"]))
                 response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
-
+        else:
+            logger.info(f"position {position['symbol']} notional: {position['notional']} updateTime: {position['updateTime']}")
+            
 def get_income_history(client: Client, start_time: int, end_time: int):
     income_history = []
     while True:
