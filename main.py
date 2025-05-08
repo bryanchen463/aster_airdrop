@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 from aster.rest_api import Client
 from aster.lib.utils import config_logging
 from aster.error import ClientError
