@@ -76,7 +76,7 @@ def close_position(client: Client):
                 side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
                 amount = abs(float(position["positionAmt"]))
                 response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
-        else:
+        elif abs(float(position["notional"])) > 0:
             logger.info(f"position {position['symbol']} notional: {position['notional']} updateTime: {position['updateTime']}")
             
 def get_income_history(client: Client, start_time: int, end_time: int):
