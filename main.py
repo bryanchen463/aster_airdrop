@@ -8,17 +8,54 @@ import random
 import yaml
 import threading
 from datetime import datetime
-config_logging(logging, logging.INFO, "aster.log")
+import os
+import gzip
 
 symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT"]
 random.seed(time.time())
+
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+class CompressedRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    def doRollover(self):
+        # 调用父类的doRollover方法，进行日志文件滚动
+        super().doRollover()
+        
+        # # 获取滚动后的文件名
+        rotated_filename = self.baseFilename + ".1"
+        target_filename = self.baseFilename + "." + datetime.now().strftime("%Y%m%d-%H%M%S") + ".gz"
+        
+        # 压缩滚动后的日志文件
+        if os.path.exists(rotated_filename):
+            with open(rotated_filename, 'rb') as f_in:
+                with gzip.open(target_filename, 'wb') as f_out:
+                    f_out.writelines(f_in)
+            
+            # 删除未压缩的滚动文件
+            os.remove(rotated_filename)
+
+def get_logger(name) -> logging.Logger:
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.WARN)
+    single_file_size = 1 * 1024 * 1024 * 1024 # 1GB
+    monitorHandler = CompressedRotatingFileHandler(filename=os.path.join(log_dir, f"{name}.log"), maxBytes=single_file_size, backupCount=5)
+
+    monitorHandler.setLevel(logging.WARN)
+    monitorFormatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    monitorHandler.setFormatter(monitorFormatter)
+    logger.addHandler(monitorHandler)
+    return logger
+
+logger = get_logger("aster")
 
 def close_position(client: Client):
     positions = client.get_position_risk()
     for position in positions:
         if time.time() * 1000 - position["updateTime"] <= 100:
             continue
-        if abs(float(position["notional"])) > 0:
+        if abs(float(position["notional"])) > 1:
             if position["symbol"] in symbols:
                 side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
                 amount = abs(float(position["positionAmt"]))
@@ -44,13 +81,13 @@ def is_cost_enough(client: Client, api_key: str, cost_per_day: float):
     start_time = int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
     end_time = int(datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999).timestamp() * 1000)
     income_history = get_income_history(client, start_time, end_time)
-    logging.info(f"income_history: {income_history}")
+    # logger.info(f"income_history: {income_history}")
     cost = 0
     for income in income_history:
         if income["symbol"] in symbols:
             item_cost = float(income.get("income", 0))
             cost -= item_cost
-    logging.info(f"{api_key} cost: {cost}")
+    # logger.info(f"{api_key} cost: {cost}")
     return cost >= cost_per_day
 
 def run(key, secret, proxy, cost_per_day):
@@ -58,7 +95,7 @@ def run(key, secret, proxy, cost_per_day):
     client = Client(key, secret,base_url="https://fapi.asterdex.com", proxies=proxies)
     
     market_info = client.exchange_info()
-    logging.info(f"market_info: {market_info}")
+    # logger.info(f"market_info: {market_info}")
     symbol_limits = {}
     for symbol in symbols:
         for symbol_info in market_info["symbols"]:
@@ -88,37 +125,38 @@ def run(key, secret, proxy, cost_per_day):
     while True:
         try:
             sleep_time = random.randint(600, 1200)
-            logging.info(f"sleep_time: {sleep_time}")
+            logger.info(f"sleep_time: {sleep_time}")
             if is_cost_enough(client, key, cost_per_day):
-                logging.info("cost is enough, not trading")
+                logger.info("cost is enough, not trading")
                 close_position(client)
                 time.sleep(sleep_time)
                 continue
             order_timeout = 1000
             orders = client.get_orders()
-            logging.info(orders)
+            # logger.info(orders)
             if len(orders) > 0:
                 for order in orders:
                     # 30s还没有成交修改价格，里面成交
-                    logging.info(f"order symbol {order['symbol']} updateTime: {order['updateTime']} time: {time.time()} diff: {time.time() * 1000 - order['updateTime']}")
+                    logger.info(f"order symbol {order['symbol']} updateTime: {order['updateTime']} time: {time.time()} diff: {time.time() * 1000 - order['updateTime']}")
                     if time.time() * 1000 - order['updateTime'] > order_timeout:
                         response = client.cancel_open_orders(symbol=order['symbol'])
-                        logging.info(f"cancel order response: {response}")
+                        logger.info(f"cancel order response: {response}")
+                        close_position(client)
                 time.sleep(sleep_time)
                 continue
             close_position(client)
             response = client.balance(recvWindow=6000)
-            # logging.info(response)
+            # logger.info(response)
             symbol = random.choice(symbols)
             book_ticker = client.book_ticker(symbol)
-            logging.info(f"book_ticker: {book_ticker}")
+            logger.info(f"book_ticker: {book_ticker}")
             balances = client.balance()
             net_balance = 0
             for balance in balances:
                 if balance["asset"] == "USDT":
                     net_balance = balance["availableBalance"]
             if float(net_balance) < 0.001:
-                logging.info("net_balance is less than 0.001, not trading")
+                logger.info("net_balance is less than 0.001, not trading")
                 continue
             symbol_limit = symbol_limits[symbol]
             bid_price = book_ticker["bidPrice"]
@@ -140,9 +178,9 @@ def run(key, secret, proxy, cost_per_day):
             if quantity > float(max_qty):
                 quantity = float(max_qty)
             if quantity * mid_price < 5:
-                logging.info(f"quantity * mid_price < 5, not trading")
+                logger.info(f"quantity * mid_price < 5, not trading")
                 continue
-            logging.info(f"symbol: {symbol} quantity: {quantity} price: {mid_price}")
+            logger.info(f"symbol: {symbol} quantity: {quantity} price: {mid_price}")
             batch_orders = []
             batch_orders.append({
                 "symbol":symbol,
@@ -162,9 +200,9 @@ def run(key, secret, proxy, cost_per_day):
             })
             for order in batch_orders:
                 response = client.new_order(symbol=order["symbol"], side=order["side"], type=order["type"], quantity=order["quantity"], price=order["price"], timeInForce=order["timeInForce"])
-                logging.info(f"new order response: {response}")
+                logger.info(f"new order response: {response}")
         except ClientError as error:
-            logging.exception(
+            logger.exception(
                 "Found error. status: {}, error code: {}, error message: {}".format(
                     error.status_code, error.error_code, error.error_message
             )
@@ -176,13 +214,13 @@ def run(key, secret, proxy, cost_per_day):
 
     # time.sleep(30)
 
-    # logging.info("closing ws connection")
+    # logger.info("closing ws connection")
     # ws_client.stop()
 
 def thread_function(key, secret, proxy, cost_per_day):
     while True:  # 循环确保线程持续运行
         try:
-            logging.info(f"start run {key} {proxy} {cost_per_day}")    
+            logger.info(f"start run {key} {proxy} {cost_per_day}")    
             run(key, secret, proxy, cost_per_day)
         except Exception as e:
             print(f"Caught exception: {e}")
