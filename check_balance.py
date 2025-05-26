@@ -69,7 +69,7 @@ def run(key, secret, proxy, cost_per_day):
     proxies = { 'https': proxy }
     client = Client(key, secret,base_url="https://fapi.asterdex.com", proxies=proxies)
     account = client.account()
-    logger.info(f"{key}: account: {account}")
+    logger.info(f"{key}: totalWalletBalance: {account['totalWalletBalance']} totalMarginBalance: {account['totalMarginBalance']} totalCrossWalletBalance: {account['totalCrossWalletBalance']}")
     
 
 def thread_function(key, secret, proxy, cost_per_day):
