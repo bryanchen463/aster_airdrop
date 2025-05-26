@@ -72,10 +72,9 @@ def close_position(client: Client):
         if time.time() * 1000 - position["updateTime"] <= 100:
             continue
         if abs(float(position["notional"])) > 1:
-            if position["symbol"] in symbols:
-                side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
-                amount = abs(float(position["positionAmt"]))
-                response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
+            side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
+            amount = abs(float(position["positionAmt"]))
+            response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
         elif abs(float(position["notional"])) > 0:
             logger.info(f"position {position['symbol']} notional: {position['notional']} updateTime: {position['updateTime']}")
             
