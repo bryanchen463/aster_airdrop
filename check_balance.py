@@ -73,15 +73,14 @@ def run(key, secret, proxy, cost_per_day):
     
 
 def thread_function(key, secret, proxy, cost_per_day):
-    while True:  # 循环确保线程持续运行
-        try:
-            logger.info(f"start run {key} {proxy} {cost_per_day}")    
-            run(key, secret, proxy, cost_per_day)
-        except Exception as e:
-            print(f"Caught exception: {e}")
-            # 此处可添加错误恢复逻辑（如重试、清理资源等）
-        # 异常处理后，循环继续，线程不会终止
-        time.sleep(1)  # 模拟后续操作
+    try:
+        logger.info(f"start run {key} {proxy} {cost_per_day}")    
+        run(key, secret, proxy, cost_per_day)
+    except Exception as e:
+        print(f"Caught exception: {e}")
+        # 此处可添加错误恢复逻辑（如重试、清理资源等）
+    # 异常处理后，循环继续，线程不会终止
+    time.sleep(1)  # 模拟后续操作
 
 def init_accounts():
     with open("config.yaml", "r") as f:
