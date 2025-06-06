@@ -159,7 +159,7 @@ def run(key, secret, proxy, cost_per_day):
                         response = client.cancel_open_orders(symbol=order['symbol'])
                         logger.info(f"cancel order response: {response}")
                         close_position(client)
-                time.sleep(sleep_time)
+                time.sleep(10)
                 continue
             close_position(client)
             response = client.balance(recvWindow=6000)
@@ -183,6 +183,7 @@ def run(key, secret, proxy, cost_per_day):
             mid_price = round(mid_price, symbol_limit["price_precision"])
             if abs(mid_price - float(bid_price)) <= 0.0000000000001 or abs(float(ask_price) - mid_price) <= 0.0000000000001:
                 # 价格波动太小，不交易
+                time.sleep(10)
                 continue
             # 一笔价值50usdt
             times = random.randint(1, 5)
