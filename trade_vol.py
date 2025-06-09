@@ -33,10 +33,6 @@ def get_trade_vol(client: Client, symbol: str, start_time: int, end_time: int):
     vol = 0
     for trade in response:
         vol += float(trade['quoteQty'])
-
-    position_risk = client.get_position_risk(symbol=symbol, recvWindow=6000)
-    if len(position_risk) > 0:
-        print(position_risk[0])
     return vol
 
 def load_config():
