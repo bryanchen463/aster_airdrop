@@ -3,7 +3,6 @@ from aster.rest_api import Client
 import time
 import logging
 import yaml
-logging.basicConfig(level=logging.DEBUG)
 
 
 symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT"]
@@ -31,7 +30,6 @@ symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT"]
 '''
 def get_trade_vol(client: Client, symbol: str, start_time: int, end_time: int):
     response = client.get_account_trades(symbol=symbol, recvWindow=6000, startTime=start_time, endTime=end_time)
-    print(response)
     vol = 0
     for trade in response:
         vol += float(trade['quoteQty'])
@@ -49,7 +47,6 @@ def load_config():
 if __name__ == "__main__":
     accounts = load_config()
     for account in accounts:
-        print(account)
         proxies = { 'https': account["proxy"] }
         client = Client(key=account["key"], secret=account["secret"], proxies=proxies)
         vol = 0
