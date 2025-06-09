@@ -51,4 +51,4 @@ if __name__ == "__main__":
             end_time = int(time.time() * 1000)  - 1000 * 60 * 60 * 24 * 0
 
             vol += get_trade_vol(client, symbol, start_time, end_time)
-        print(account["name"], vol)
+        print(account["key"], vol)
