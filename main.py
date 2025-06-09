@@ -185,11 +185,14 @@ def run(key, secret, proxy, cost_per_day):
                 # 价格波动太小，不交易
                 time.sleep(10)
                 continue
+            value = 50
+            if float(net_balance) < 50:
+                value = 20 * float(net_balance) / 2
             # 一笔价值50usdt
             times = random.randint(1, 5)
             min_qty = symbol_limit["min_qty"]
             max_qty = symbol_limit["max_qty"]
-            quantity = 50/mid_price
+            quantity = value/mid_price
             quantity = quantity + times * min_qty
             quantity = int(quantity / float(symbol_limit["step_size"])) * float(symbol_limit["step_size"])
             quantity = round(quantity, int(symbol_limit["qty_precision"]))
