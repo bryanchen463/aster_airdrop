@@ -68,15 +68,19 @@ logger = get_logger("aster")
 
 def close_position(client: Client):
     positions = client.get_position_risk()
-    for position in positions:
-        if time.time() * 1000 - position["updateTime"] <= 100:
-            continue
-        if abs(float(position["notional"])) > 1:
-            side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
-            amount = abs(float(position["positionAmt"]))
-            response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
-        elif abs(float(position["notional"])) > 0:
-            logger.info(f"position {position['symbol']} notional: {position['notional']} updateTime: {position['updateTime']}")
+    try:
+        for position in positions:
+            if time.time() * 1000 - position["updateTime"] <= 100:
+                continue
+            if abs(float(position["notional"])) > 1:
+                side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
+                amount = abs(float(position["positionAmt"]))
+                logger.info(f"symbol: {position['symbol']} quantity: {amount} price: {position['entryPrice']}")
+                response = client.new_order(symbol=position["symbol"], side=side, type="MARKET", quantity=amount, reduceOnly=True)
+            elif abs(float(position["notional"])) > 0:
+                logger.info(f"position {position['symbol']} notional: {position['notional']} updateTime: {position['updateTime']}")
+    except Exception as e:
+        logger.exception(e)
             
 def get_income_history(client: Client, start_time: int, end_time: int):
     income_history = []
