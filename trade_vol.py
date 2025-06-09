@@ -36,6 +36,9 @@ def get_trade_vol(client: Client, symbol: str, start_time: int, end_time: int):
     for trade in response:
         vol += float(trade['quoteQty'])
 
+    position_risk = client.get_position_risk(symbol=symbol, recvWindow=6000)
+    if len(position_risk) > 0:
+        print(position_risk[0])
     return vol
 
 def load_config():
@@ -51,8 +54,8 @@ if __name__ == "__main__":
         client = Client(key=account["key"], secret=account["secret"], proxies=proxies)
         vol = 0
         for symbol in symbols:
-            start_time = int(time.time() * 1000) - 1000 * 60 * 60 * 24 * 14
-            end_time = int(time.time() * 1000)  - 1000 * 60 * 60 * 24 * 7
+            start_time = int(time.time() * 1000) - 1000 * 60 * 60 * 24 * 7
+            end_time = int(time.time() * 1000)  - 1000 * 60 * 60 * 24 * 0
 
             vol += get_trade_vol(client, symbol, start_time, end_time)
         print(account["name"], vol)
