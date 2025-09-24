@@ -1,0 +1,3 @@
+[submodule "aster-connector-python"]
+	path = aster-connector-python
+	url = https://github.com/asterdex/aster-connector-python.git

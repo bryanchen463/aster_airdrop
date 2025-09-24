@@ -1,6 +1,13 @@
+hedge_mode: false
+dry_run: false
 accounts:
-  - name: "xxx"
+  - name: "acc_a"
     key: "xxx"
     secret: "xxx"
+    proxy: "xxx"
+    cost_per_day: 1
+  - name: "acc_b"
+    key: "yyy"
+    secret: "yyy"
     proxy: "xxx"
     cost_per_day: 1
