@@ -352,7 +352,7 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
                 time.sleep(sleep_time)
                 continue
 
-            order_timeout = 1000
+            order_timeout = 1000 + random.randint(0, 60 * 10)
             # 两边清理超时订单
             for c in (client_a, client_b):
                 orders = c.get_orders()
