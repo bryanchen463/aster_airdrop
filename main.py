@@ -343,8 +343,8 @@ def compute_symbol_and_qty(client: Client, symbol_limits: dict):
     symbol = random.choice(symbols)
     book_ticker = client.book_ticker(symbol)
     logger.info(f"book_ticker: {book_ticker}")
-    balances = client.balance()
-    net_balance = get_net_balance(client, balances)
+    account = client.account()
+    net_balance = get_net_balance(client, account)
     if float(net_balance) < 0.001:
         return None, None, None
     symbol_limit = symbol_limits[symbol]
