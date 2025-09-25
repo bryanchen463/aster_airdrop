@@ -12,7 +12,7 @@ from datetime import datetime
 import os
 import gzip
 
-symbols = ["BTCUSDT", "ETHUSDT", "ASTERUSDT", "XRPUSDT", "DOGEUSDT"]
+symbols = ["BTCUSDT", "ETHUSDT", "ASTERUSDT", "ASTERUSDT", "ASTERUSDT"]
 random.seed(time.time())
 
 log_dir = "logs"
