@@ -78,7 +78,7 @@ def get_income_history(client: Client, start_time: int, end_time: int):
 def get_mark_price(mark_price_dict: dict, symbol: str):
     if symbol in mark_price_dict:
         return mark_price_dict[symbol]['markPrice']
-    if symbol is "USDTUSDT":
+    if symbol == "USDTUSDT":
         return 1
     logger.error(f"symbol {symbol} not found in mark_price_dict")
     return 0
@@ -98,6 +98,7 @@ def calc_cost(client: Client, api_key: str, cost_per_day: float):
     for income in income_history:
         if income["incomeType"] != "COMMISSION":
             continue
+        symbol = income["asset"]+"USDT"
         mark_price = get_mark_price(mark_price_dict, symbol)
         cost += float(income.get("income", 0)) * float(mark_price)
     # logger.info(f"{api_key} cost: {cost}")
