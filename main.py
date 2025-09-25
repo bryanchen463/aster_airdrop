@@ -311,15 +311,40 @@ def build_symbol_limits(client: Client):
                 }
     return symbol_limits
 
+def get_net_balance(client: Client, account: dict):
+    mark_price_dict = {}
+    mark_price_info = client.mark_price()
+    net_balance = 0
+    for mark_price_info in mark_price_info:
+        mark_price_dict[mark_price_info['symbol']] = mark_price_info
+    #logger.info(f"mark_price: {mark_price_dict}")
+    for asset in account['assets']:
+        if abs(float(asset['marginBalance'])) <= 1e-10:
+            continue
+        symbol = asset['asset'] + "USDT"
+        mark_price = 0
+        if symbol in mark_price_dict:
+            mark_price_info = mark_price_dict[symbol]
+            mark_price = mark_price_info['markPrice']
+        # logger.info(f"{key}: asset: {asset['asset']} walletBalance: {asset['walletBalance']} marginBalance: {asset['marginBalance']} crossWalletBalance: {asset['crossWalletBalance']} markPrice: {mark_price} asset:{asset}")
+        value = float(asset['marginBalance']) * float(mark_price)
+        if asset['asset'] == "USDT" or asset['asset'] == "BUSD" or asset['asset'] == "USDC" or asset['asset'] == "USDF":
+            value =  float(asset['marginBalance'])
+        net_balance += value
+    for position in account['positions']:
+        if position['notional'] == "0":
+            continue
+        #logger.info(f"{key}: position: {position['symbol']} positionAmt: {position['positionAmt']} entryPrice: {position['entryPrice']} leverage: {position['leverage']} isolated: {position['isolated']} positionSide: {position['positionSide']} notional: {position['notional']}")
+        # net_balance += float(position['notional'])/float(position['leverage'])
+    # logger.info(f"{key}: totalWalletBalance: {account['totalWalletBalance']} totalMarginBalance: {account['totalMarginBalance']} totalCrossWalletBalance: {account['totalCrossWalletBalance']} account:{account}")
+    return net_balance
+
 def compute_symbol_and_qty(client: Client, symbol_limits: dict):
     symbol = random.choice(symbols)
     book_ticker = client.book_ticker(symbol)
     logger.info(f"book_ticker: {book_ticker}")
     balances = client.balance()
-    net_balance = 0
-    for balance in balances:
-        if balance["asset"] == "USDT":
-            net_balance = balance["availableBalance"]
+    net_balance = get_net_balance(client, balances)
     if float(net_balance) < 0.001:
         return None, None, None
     symbol_limit = symbol_limits[symbol]
@@ -330,9 +355,7 @@ def compute_symbol_and_qty(client: Client, symbol_limits: dict):
     mid_price = round(mid_price, symbol_limit["price_precision"])
     if abs(mid_price - float(bid_price)) <= 0.0000000000001 or abs(float(ask_price) - mid_price) <= 0.0000000000001:
         return None, None, None
-    value = 50
-    if float(net_balance) < 50:
-        value = 20 * float(net_balance) / 2
+    value = 1000
     times = random.randint(1, 5)
     min_qty = symbol_limit["min_qty"]
     max_qty = symbol_limit["max_qty"]
