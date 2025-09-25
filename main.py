@@ -81,35 +81,50 @@ def close_position(client: Client):
                 logger.info(f"position {position['symbol']} notional: {position['notional']} updateTime: {position['updateTime']}")
     except Exception as e:
         logger.exception(e)
-            
+
 def get_income_history(client: Client, start_time: int, end_time: int):
     income_history = []
     while True:
-        items = client.get_income_history(startTime=start_time, endTime=end_time)
-        for item in items:
-            if item["symbol"] in symbols:
-                if int(item["time"]) < start_time:
-                    continue
-                income_history.append(item)
+        items = client.get_income_history(startTime=start_time, endTime=end_time, incomeType="COMMISSION")
         if len(items) == 0:
             break
+        income_history.extend(items)
         start_time = int(items[-1]["time"]) + 1
         time.sleep(0.1)
     return income_history
 
-def is_cost_enough(client: Client, api_key: str, cost_per_day: float):
+def get_mark_price(mark_price_dict: dict, symbol: str):
+    if symbol in mark_price_dict:
+        return mark_price_dict[symbol]['markPrice']
+    if symbol is "USDTUSDT":
+        return 1
+    logger.error(f"symbol {symbol} not found in mark_price_dict")
+    return 0
+    
+
+def calc_cost(client: Client, api_key: str, cost_per_day: float):
     # 计算当天整点的时间戳
     start_time = int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
     end_time = int(datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999).timestamp() * 1000)
     income_history = get_income_history(client, start_time, end_time)
     # logger.info(f"income_history: {income_history}")
     cost = 0
+    mark_price_dict = {}
+    mark_price_info = client.mark_price()
+    for mark_price_info in mark_price_info:
+        mark_price_dict[mark_price_info['symbol']] = mark_price_info
     for income in income_history:
-        if income["symbol"] in symbols:
-            item_cost = float(income.get("income", 0))
-            cost -= item_cost
+        if income["incomeType"] != "COMMISSION":
+            continue
+        symbol = income["asset"]+"USDT"
+        mark_price = get_mark_price(mark_price_dict, symbol)
+        cost += float(income.get("income", 0)) * float(mark_price)
     # logger.info(f"{api_key} cost: {cost}")
-    return cost >= cost_per_day
+    return cost 
+
+def is_cost_enough(client: Client, api_key: str, cost_per_day: float):
+   cost = calc_cost(client, api_key, cost_per_day)
+   return abs(cost) >= cost_per_day
 
 def run(key, secret, proxy, cost_per_day):
     proxies = { 'https': proxy }
@@ -189,8 +204,8 @@ def run(key, secret, proxy, cost_per_day):
                 # 价格波动太小，不交易
                 time.sleep(10)
                 continue
-            value = 50
-            if float(net_balance) < 50:
+            value = 500
+            if float(net_balance) < value:
                 value = 20 * float(net_balance) / 2
             # 一笔价值50usdt
             times = random.randint(1, 5)
