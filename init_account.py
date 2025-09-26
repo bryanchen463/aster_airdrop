@@ -114,7 +114,10 @@ def run(key, secret, proxy, cost_per_day):
         response = client.change_leverage(symbol=symbol, leverage=10)
         logger.info(f"{key} {response}")
 
-    client.change_multi_asset_mode(multiAssetsMargin=True)
+    try:
+        client.change_multi_asset_mode(multiAssetsMargin=True)
+    except Exception as e:
+        logger.error(f"{key} {e}")
     
 
 
