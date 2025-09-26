@@ -204,7 +204,7 @@ def run(key, secret, proxy, cost_per_day):
                 # 价格波动太小，不交易
                 time.sleep(10)
                 continue
-            value = 500
+            value = 250
             if float(net_balance) < value:
                 value = 20 * float(net_balance) / 2
             # 一笔价值50usdt
