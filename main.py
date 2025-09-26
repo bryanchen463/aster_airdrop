@@ -355,7 +355,7 @@ def compute_symbol_and_qty(client: Client, symbol_limits: dict):
     mid_price = round(mid_price, symbol_limit["price_precision"])
     if abs(mid_price - float(bid_price)) <= 0.0000000000001 or abs(float(ask_price) - mid_price) <= 0.0000000000001:
         return None, None, None
-    value = 1000
+    value = 250
     times = random.randint(1, 5)
     min_qty = symbol_limit["min_qty"]
     max_qty = symbol_limit["max_qty"]
