@@ -377,7 +377,7 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
 
     while True:
         try:
-            sleep_time = random.randint(600, 1200)
+            sleep_time = random.randint(100, 300)
             logger.info(f"sleep_time: {sleep_time}")
 
             # 成本控制：两个账户都达到阈值则不交易
@@ -390,7 +390,7 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
                 time.sleep(sleep_time)
                 continue
 
-            order_timeout = 1000 + random.randint(0, 60 * 10)
+            order_timeout = 300 + random.randint(0, 60 * 10)
             # 两边清理超时订单
             for c in (client_a, client_b):
                 orders = c.get_orders()
