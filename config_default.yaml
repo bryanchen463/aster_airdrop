@@ -11,3 +11,8 @@ accounts:
     secret: "yyy"
     proxy: "xxx"
     cost_per_day: 1
+  - name: "acc_c"
+    key: "zzz"
+    secret: "zzz"
+    proxy: "xxx"
+    cost_per_day: 1
