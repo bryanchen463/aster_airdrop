@@ -66,11 +66,11 @@ def get_logger(name) -> logging.Logger:
 
 logger = get_logger("aster")
 
-def close_position(client: Client):
+def close_position(client: Client, force: bool = False):
     positions = client.get_position_risk()
     try:
         for position in positions:
-            if time.time() * 1000 - position["updateTime"] <= 100:
+            if time.time() * 1000 - position["updateTime"] <= 100 and not force:
                 continue
             if abs(float(position["notional"])) > 1:
                 side = "SELL" if float(position["positionAmt"]) > 0 else "BUY"
@@ -164,7 +164,7 @@ def run(key, secret, proxy, cost_per_day):
             logger.info(f"sleep_time: {sleep_time}")
             if is_cost_enough(client, key, cost_per_day):
                 logger.info("cost is enough, not trading")
-                close_position(client)
+                close_position(client, force=True)
                 time.sleep(sleep_time)
                 continue
             order_timeout = 1000
@@ -177,7 +177,7 @@ def run(key, secret, proxy, cost_per_day):
                     if time.time() * 1000 - order['updateTime'] > order_timeout:
                         response = client.cancel_open_orders(symbol=order['symbol'])
                         logger.info(f"cancel order response: {response}")
-                        close_position(client)
+                        close_position(client, force=True)
                 time.sleep(10)
                 continue
             close_position(client)
@@ -431,12 +431,12 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
                     error.status_code, error.error_code, error.error_message
             )
             )
-            close_position(client_a)
-            close_position(client_b)
+            close_position(client_a, force=True)
+            close_position(client_b, force=True)
         except Exception as e:
             logger.exception(e)
-            close_position(client_a)
-            close_position(client_b)
+            close_position(client_a, force=True)
+            close_position(client_b, force=True)
 
         time.sleep(sleep_time)
 
