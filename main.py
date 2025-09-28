@@ -430,9 +430,13 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
                 "Found error. status: {}, error code: {}, error message: {}".format(
                     error.status_code, error.error_code, error.error_message
             )
-        )
+            )
+            close_position(client_a)
+            close_position(client_b)
         except Exception as e:
             logger.exception(e)
+            close_position(client_a)
+            close_position(client_b)
 
         time.sleep(sleep_time)
 
