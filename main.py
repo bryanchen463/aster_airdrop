@@ -385,8 +385,8 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
             enough_b = is_cost_enough(client_b, account_b["key"], account_b.get("cost_per_day", 0))
             if enough_a and enough_b:
                 logger.info("cost is enough for both accounts, not trading")
-                close_position(client_a)
-                close_position(client_b)
+                # close_position(client_a)
+                # close_position(client_b)
                 time.sleep(sleep_time)
                 continue
 
