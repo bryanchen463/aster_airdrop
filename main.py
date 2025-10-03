@@ -379,7 +379,11 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
     client_a = create_client(account_a["key"], account_a["secret"], account_a["proxy"])
     client_b = create_client(account_b["key"], account_b["secret"], account_b["proxy"])
 
-    symbol_limits = build_symbol_limits(client_a)
+    try:
+        symbol_limits = build_symbol_limits(client_a)
+    except Exception as e:
+        logger.exception(f"build symbol limits failed:{e}")
+        return
 
     while True:
         try:
