@@ -85,12 +85,15 @@ def close_position(client: Client, force: bool = False):
 def get_income_history(client: Client, start_time: int, end_time: int):
     income_history = []
     while True:
-        items = client.get_income_history(startTime=start_time, endTime=end_time, incomeType="COMMISSION")
-        if len(items) == 0:
-            break
-        income_history.extend(items)
-        start_time = int(items[-1]["time"]) + 1
-        time.sleep(0.1)
+        try:
+            items = client.get_income_history(startTime=start_time, endTime=end_time, incomeType="COMMISSION")
+            if len(items) == 0:
+                break
+            income_history.extend(items)
+            start_time = int(items[-1]["time"]) + 1
+            time.sleep(0.1)
+        except Exception as e:
+            logger.exception(f"get income history error:{e}")
     return income_history
 
 def get_mark_price(mark_price_dict: dict, symbol: str):
@@ -110,7 +113,10 @@ def calc_cost(client: Client, api_key: str, cost_per_day: float):
     # logger.info(f"income_history: {income_history}")
     cost = 0
     mark_price_dict = {}
-    mark_price_info = client.mark_price()
+    try:
+        mark_price_info = client.mark_price()
+    except Exception as e:
+        logger.error(f"get mark price failed:{e}")
     for mark_price_info in mark_price_info:
         mark_price_dict[mark_price_info['symbol']] = mark_price_info
     for income in income_history:
