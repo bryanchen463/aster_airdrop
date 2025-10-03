@@ -67,8 +67,8 @@ def get_logger(name) -> logging.Logger:
 logger = get_logger("aster")
 
 def close_position(client: Client, force: bool = False):
-    positions = client.get_position_risk()
     try:
+        positions = client.get_position_risk()
         for position in positions:
             if time.time() * 1000 - position["updateTime"] <= 100 and not force:
                 continue
