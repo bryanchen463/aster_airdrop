@@ -429,10 +429,13 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
             if dry_run:
                 logger.info("dry_run enabled, skip placing orders")
             else:
+                # side 随机
+                sideA = random.choice(["BUY", "SELL"])
+                sideB = "SELL" if sideA == "BUY" else "BUY"
                 # A 买，B 卖
-                resp_a = client_a.new_order(symbol=symbol, side="BUY", type="LIMIT", quantity=quantity, price=price, timeInForce="GTC")
+                resp_a = client_a.new_order(symbol=symbol, side=sideA, type="LIMIT", quantity=quantity, price=price, timeInForce="GTC")
                 logger.info(f"A new order response: {resp_a}")
-                resp_b = client_b.new_order(symbol=symbol, side="SELL", type="LIMIT", quantity=quantity, price=price, timeInForce="GTC")
+                resp_b = client_b.new_order(symbol=symbol, side=sideB, type="LIMIT", quantity=quantity, price=price, timeInForce="GTC")
                 logger.info(f"B new order response: {resp_b}")
 
         except ClientError as error:
