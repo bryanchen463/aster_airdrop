@@ -383,6 +383,7 @@ def hedge_run(account_a: dict, account_b: dict, dry_run: bool):
         symbol_limits = build_symbol_limits(client_a)
     except Exception as e:
         logger.exception(f"build symbol limits failed:{e}")
+        time.sleep(100)
         return
 
     while True:
